@@ -16,6 +16,9 @@ async function connectToDB() {
     if (isConnected) return;
     
     try {
+        console.log('Attempting to connect to MongoDB...');
+        console.log('MONGO_URI exists:', !!process.env.MONGO_URI);
+        
         await mongoose.connect(process.env.MONGO_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
@@ -23,24 +26,20 @@ async function connectToDB() {
             minPoolSize: 1,
             serverSelectionTimeoutMS: 5000,
             socketTimeoutMS: 45000,
-            socketKeepAliveMS: 30000,
-            keepAlive: true,
-            retryWrites: true,
-            w: 'majority',
-            journal: true,
         });
-        console.log('Connected to Database');
+        console.log('✅ Connected to Database');
         isConnected = true;
     }
     catch (err) {
-        console.error('Database connection error:', err);
+        console.error('❌ Database connection error:', err.message);
+        console.error('Full error:', err);
         isConnected = false;
         throw err;
     }
 }
 
 // Connect to DB immediately on startup
-connectToDB().catch(err => console.error('Initial DB connection failed:', err));
+connectToDB().catch(err => console.error('❌ Initial DB connection failed:', err.message));
 
 // Body parsing middleware MUST come BEFORE routes
 app.use(express.json());
