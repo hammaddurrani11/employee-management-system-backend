@@ -19,6 +19,15 @@ async function connectToDB() {
         await mongoose.connect(process.env.MONGO_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
+            maxPoolSize: 1,
+            minPoolSize: 1,
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000,
+            socketKeepAliveMS: 30000,
+            keepAlive: true,
+            retryWrites: true,
+            w: 'majority',
+            journal: true,
         });
         console.log('Connected to Database');
         isConnected = true;
@@ -26,11 +35,12 @@ async function connectToDB() {
     catch (err) {
         console.error('Database connection error:', err);
         isConnected = false;
+        throw err;
     }
 }
 
 // Connect to DB immediately on startup
-connectToDB();
+connectToDB().catch(err => console.error('Initial DB connection failed:', err));
 
 // Body parsing middleware MUST come BEFORE routes
 app.use(express.json());
@@ -52,7 +62,10 @@ app.use(async (req, res, next) => {
             await connectToDB();
         } catch (err) {
             console.error('Failed to connect to DB:', err);
-            return res.status(500).json({ error: 'Database connection failed' });
+            return res.status(503).json({ 
+                error: 'Internal Server Error',
+                message: 'Database connection unavailable'
+            });
         }
     }
     next();
