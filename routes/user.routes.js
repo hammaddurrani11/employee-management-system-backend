@@ -13,33 +13,42 @@ router.post('/register/admin',
     body('email').trim().isEmail(),
     body('password').trim().isLength({ min: 5 }).withMessage("Password must be atleast 5 Charachters Long")
     , async (req, res) => {
-        const errors = validationResult(req)
+        try {
+            const errors = validationResult(req)
 
-        if (!errors.isEmpty()) {
-            return res.status(400).json({
-                error: errors.array().map(err => err.msg)
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    error: errors.array().map(err => err.msg)
+                })
+            }
+
+            const { username, email, password } = req.body
+
+            const existingUser = await AdminModel.findOne({ email });
+
+            if (existingUser) {
+                return res.status(400).json({
+                    error: 'Email Already Exists'
+                })
+            }
+
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            const user = await AdminModel.create({
+                username,
+                email,
+                password: hashedPassword
+            })
+
+            res.json(user)
+        }
+        catch (err) {
+            console.error('Register error:', err);
+            res.status(500).json({
+                error: 'Internal Server Error',
+                message: err.message
             })
         }
-
-        const { username, email, password } = req.body
-
-        const existingUser = await AdminModel.findOne({ email });
-
-        if (existingUser) {
-            return res.status(400).json({
-                error: 'Email Already Exists'
-            })
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const user = await AdminModel.create({
-            username,
-            email,
-            password: hashedPassword
-        })
-
-        res.json(user)
     })
 
 router.post('/login',
@@ -126,33 +135,42 @@ router.post('/register/employee', authMiddleware,
     body('email').trim().isEmail(),
     body('password').trim().isLength({ min: 5 }).withMessage("Password must be atleast 5 Charachters Long")
     , async (req, res) => {
-        const error = validationResult(req);
+        try {
+            const error = validationResult(req);
 
-        if (!error.isEmpty()) {
-            return res.status(400).json({
-                error: error.array().map(err => err.msg)
+            if (!error.isEmpty()) {
+                return res.status(400).json({
+                    error: error.array().map(err => err.msg)
+                })
+            }
+
+            const { username, email, password } = req.body;
+
+            const oldUser = await EmployeeModel.findOne({ email: email });
+
+            if (oldUser) {
+                return res.status(400).json({
+                    error: 'Email Already Registered'
+                })
+            }
+
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            const user = await EmployeeModel.create({
+                username: username,
+                email: email,
+                password: hashedPassword
+            })
+
+            res.send(user);
+        }
+        catch (err) {
+            console.error('Register employee error:', err);
+            res.status(500).json({
+                error: 'Internal Server Error',
+                message: err.message
             })
         }
-
-        const { username, email, password } = req.body;
-
-        const oldUser = await EmployeeModel.findOne({ email: email });
-
-        if (oldUser) {
-            return res.status(400).json({
-                error: 'Email Already Registered'
-            })
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const user = await EmployeeModel.create({
-            username: username,
-            email: email,
-            password: hashedPassword
-        })
-
-        res.send(user);
     })
 
 router.post('/createtask', authMiddleware, async (req, res) => {
@@ -192,8 +210,10 @@ router.post('/createtask', authMiddleware, async (req, res) => {
         })
     }
     catch (err) {
+        console.error('Task creation error:', err);
         return res.status(500).json({
-            error: 'Server error while creating task'
+            error: 'Server error while creating task',
+            message: err.message
         })
     }
 })

@@ -9,9 +9,12 @@ dotenv.config();
 // const connectToDB = require('./config/db');
 // connectToDB();
 
+// Initialize database connection once on startup
 isConnected = false;
 
 async function connectToDB() {
+    if (isConnected) return;
+    
     try {
         await mongoose.connect(process.env.MONGO_URI, {
             useNewUrlParser: true,
@@ -22,8 +25,12 @@ async function connectToDB() {
     }
     catch (err) {
         console.error('Database connection error:', err);
+        isConnected = false;
     }
 }
+
+// Connect to DB immediately on startup
+connectToDB();
 
 // Body parsing middleware MUST come BEFORE routes
 app.use(express.json());
@@ -38,9 +45,15 @@ app.use(cors({
     credentials: true
 }));
 
-app.use((req, res, next) => {
+// Reconnect middleware
+app.use(async (req, res, next) => {
     if (!isConnected) {
-        connectToDB();
+        try {
+            await connectToDB();
+        } catch (err) {
+            console.error('Failed to connect to DB:', err);
+            return res.status(500).json({ error: 'Database connection failed' });
+        }
     }
     next();
 })
