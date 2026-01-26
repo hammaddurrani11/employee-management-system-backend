@@ -34,8 +34,8 @@ router.post('/register/admin',
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = await AdminModel.create({
-            username: username,
-            email: email,
+            username,
+            email,
             password: hashedPassword
         })
 
@@ -59,12 +59,13 @@ router.post('/login',
 
             let user = await AdminModel.findOne({ email: email });
 
+            if(user) {
+                user.role = 'admin';
+            }
+
             if (!user) {
                 user = await EmployeeModel.findOne({ email: email });
                 if (user) user.role = 'employee';
-            }
-            else {
-                user.role = 'admin'
             }
 
             if (!user) {
