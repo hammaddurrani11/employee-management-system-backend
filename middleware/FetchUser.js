@@ -2,13 +2,13 @@ const jwt = require('jsonwebtoken');
 
 const FetchUser = (req, res, next) => {
     // const token = req.cookies.token;
-    const token = localStorage.getItem('authToken');
+    const authHeader = req.header("Authorization");
 
-    if (!token) {
-        return res.status(401).json({
-            message: 'Unauthorized'
-        })
+    if (!authHeader) {
+        return res.status(401).json({ message: "Unauthorized" });
     }
+
+    const token = authHeader.replace("Bearer ", "");
 
     try {
         const data = jwt.verify(token, process.env.JWT_SECRET);

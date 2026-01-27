@@ -104,8 +104,6 @@ router.post('/login',
             //     sameSite: 'strict',
             // })
 
-            localStorage.setItem('authToken', token);
-
             res.json({
                 message: 'Logged In Successfully',
                 role: user.role,
