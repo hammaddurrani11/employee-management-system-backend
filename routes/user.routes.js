@@ -68,7 +68,7 @@ router.post('/login',
 
             let user = await AdminModel.findOne({ email: email });
 
-            if(user) {
+            if (user) {
                 user.role = 'admin';
             }
 
@@ -98,11 +98,13 @@ router.post('/login',
             }, process.env.JWT_SECRET
             )
 
-            res.cookie('token', token, {
-                httpOnly: true,
-                secure: true,
-                sameSite: 'strict',
-            })
+            // res.cookie('token', token, {
+            //     httpOnly: true,
+            //     secure: true,
+            //     sameSite: 'strict',
+            // })
+
+            localStorage.setItem('authToken', token);
 
             res.json({
                 message: 'Logged In Successfully',
@@ -219,11 +221,14 @@ router.post('/createtask', authMiddleware, async (req, res) => {
 })
 
 router.post('/logout', (req, res) => {
-    res.clearCookie('token', {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'strict'
-    })
+    // res.clearCookie('token', {
+    //     httpOnly: true,
+    //     secure: true,
+    //     sameSite: 'strict'
+    // })
+
+    localStorage.removeItem('authToken');
+
     res.json({ message: 'Logged Out' })
 })
 

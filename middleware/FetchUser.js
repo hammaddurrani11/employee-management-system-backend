@@ -1,7 +1,8 @@
 const jwt = require('jsonwebtoken');
 
 const FetchUser = (req, res, next) => {
-    const token = req.cookies.token;
+    // const token = req.cookies.token;
+    const token = localStorage.getItem('authToken');
 
     if (!token) {
         return res.status(401).json({
